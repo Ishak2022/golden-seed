@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # 1. The "Head" - Next.js Frontend
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: golden-seed-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/goldenseed
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-supersecretkey}
+      - SCOUT_API_KEY=${SCOUT_API_KEY:-somesecurekey}
+      - API_SECRET_KEY=${API_SECRET_KEY:-somesecurekey} # For frontend to verify itself
+    depends_on:
+      - db
+      - backend
+
+  # 2. The "Brain" - Python Backend
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: golden-seed-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/goldenseed
+      - SCOUT_API_KEY=${SCOUT_API_KEY:-somesecurekey}
+    depends_on:
+      - db
+      - redis
+
+  # 3. The "State" - PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: golden-seed-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=goldenseed
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 4. The "Cache" - Redis
+  redis:
+    image: redis:7-alpine
+    container_name: golden-seed-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,31 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+venv/
+.venv/
+env/
+__pycache__/
+
+# Next.js
+.next/
+out/
+
+# Vercel
+.vercel
+
+# Agent
+.gemini/
+.agent/
+
+# System
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

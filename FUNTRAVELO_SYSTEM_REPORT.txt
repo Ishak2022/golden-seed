@@ -1,0 +1,950 @@
+================================================================================
+    GOLDEN SEED (FUNTRAVELO) - COMPLETE SYSTEM REPORT
+    Enterprise Travel Operating System
+    Version 1.1.0 | February 2026
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. EXECUTIVE SUMMARY
+2. SYSTEM OVERVIEW
+3. HOW THE SYSTEM WORKS
+4. CUSTOMER TYPES & CONNECTION METHODS
+5. DASHBOARDS & USER INTERFACES
+6. PRICING PLANS
+7. PAYMENT METHODS
+8. TECHNICAL ARCHITECTURE
+9. BUSINESS MODEL
+10. REVENUE STREAMS
+11. GOLDEN SEED DATA SYSTEM
+
+
+================================================================================
+RECENT UPDATES & SYSTEM STATUS (Late February 2025)
+================================================================================
+
+LATE FEBRUARY RELEASES & REFINEMENTS:
+✓ Enhanced Provider Orchestration: Implemented Slot Packs for reusable templates, 
+  tenant overrides, Redis-backed circuit breaker, and health-score based routing.
+✓ 3-Tier Model Finalized: Fully refactored RBAC and schema to reflect the new 
+  three-tier hierarchy (Platform Admin, Enterprise/Network, Agency Solo). Removed 
+  legacy AGENCY_STAFF and ENTERPRISE_ADMIN roles, enforcing Subagency model.
+✓ Pricing UI & Add-ons: Integrated add-on selection toggles (e.g., AI Suite Bundle) 
+  and conflict handling into the Next.js Pricing page and Stripe checkout logic.
+✓ Background Workers: Verified `confirm_booking` logic with graceful degradation 
+  (resiliency when Redis is unavailable) and proper audit logging.
+✓ Frontpage Visuals: Polished landing page with a clean, cohesive white background 
+  across Hero, Features, How It Works, Audiences, and Pricing sections.
+✓ Security & Testing: Fixed Mock Admin Auth flow, restored diagnostic AI worker 
+  tests with FastAPI overrides, and generated final Audit Proof Packs.
+✓ Public Portal & Legal: Built /about, /support (Help Center), and strict legal
+  pages (/privacy, /terms, etc.). Established MarketingPageShell for cohesive branding.
+✓ Contact & Resend: Deployed /api/contact/route.ts via Resend with Zod validation,
+  honeypot spam shielding, and IP-based rate limiting.
+✓ Branding Polish: Migrated temporary mock emails (e.g., aitp.local) to official 
+  funtravelo.com and goldenseed.network domains across Enterprise and Agency UI.
+✓ Global Navigation Polish: Enforced a single link source of truth. Features and 
+  Audiences use `#platform` and `#solutions` hashes for seamless routing. Removed 
+  all legacy `localhost` hardcoding from the Next.js API paths to ensure production 
+  compatibility on the `funtravelo.com` domain.
+
+BILLING FLOW IMPLEMENTED (Early Feb 2025):
+✓ Stripe Checkout & Customer Portal: Endpoints to create Checkout/Portal sessions 
+  supporting Growth & Business plans on monthly/yearly intervals.
+✓ Stripe Webhooks: Verification and processing of subscription lifecycle events.
+✓ 14-Day Free Trial: Growth/Business plans start with a trial. No credit card required.
+✓ Agency Model Updated: Added Stripe identification and status fields.
+
+CRITICAL FIXES APPLIED (Jan 2025):
+✓ Rate Limiting Corrected: Enterprise plan now properly limits at 1,000 RPM.
+✓ Known Issues Resolved: Documented fixes in FIXES_APPLIED.md.
+
+DEPLOYMENT READINESS:
+✓ Production Ready: Docker Compose configuration complete
+✓ Environment Ready: .env.example provides all required configuration
+✓ Database Schema: Prisma schema with 25+ models verified
+✓ Golden Seed Data: 347-row premium destinations dataset ready for deployment
+⚠️ Requires Configuration: API keys (Stripe + Price IDs, Amadeus, email),
+   PostgreSQL database, Redis instance, cloud storage (S3), domain name, SSL
+⚠️ Known Issues: 8 documented issues in CANONICAL_BLUEPRINT.md (non-critical)
+
+SYSTEM HEALTH:
+✓ Backend: FastAPI with async SQLAlchemy, tested via audit proof generators
+✓ Frontend: Next.js 15 + React 19, ready for production deployment
+✓ Mobile: React Native with Expo, functional per HANDOFF_GUIDE.md
+✓ Rate Limiting: Redis-based with per-plan tier enforcement (100/500/1,000 RPM)
+✓ Security: Tier-based access control, rate limiting, audit logging
+✓ Billing: Stripe-powered subscription lifecycle with webhook-driven state machine
+
+For complete fix details, see: FIXES_APPLIED.md
+For known issues list, see: docs/CANONICAL_BLUEPRINT.md
+
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+FunTravelo (Golden Seed) is an enterprise-grade AI-powered travel 
+operating system that revolutionizes the travel booking industry through:
+
+• Multi-Tenant User Management
+    ├── Hierarchical Structure: Platform Admin → Enterprise/Network → Subagency → Agent/Staff
+    └── Subagency Suspension: Administrative control to lock/unlock sub-node clusters
+• Platform Admin Backend: Unified oversight of health, billing, security, and providers
+• AI-Powered Price Discovery: Autonomous agents detect 15%+ price drops
+• Proactive Price Optimization: Continuous monitoring and rebooking
+• Headless API: Institutional-grade programmatic access
+• Real-Time Monitoring: 24/7 booking protection and alerts
+
+KEY METRICS:
+- Target: 15%+ institutional savings on travel bookings
+- Processing: Distributed price monitoring across global sources
+- Multi-Tenancy: Strict isolation for Enterprise & Agency tenants
+- Revenue: Subscription-based SaaS + API licensing
+
+================================================================================
+2. SYSTEM OVERVIEW
+================================================================================
+
+2.1 WHAT IS GOLDEN SEED?
+-------------------------
+Golden Seed is the core product - AI-detected travel opportunities with
+significant price drops (15%+ savings). The system continuously monitors
+prices across and alerts institutional users when re-booking opportunities arise.
+
+2.2 PLATFORM COMPONENTS
+-----------------------
+├── Platform Admin Dashboard (Global Governance)
+├── Enterprise Dashboard (Network Management)
+└── Agency Dashboard (Solo & Sub-agency Operations)
+│
+├── Backend API (Python / FastAPI / SQLAlchemy)
+│   ├── RESTful API Endpoints (Tenant Scoped)
+│   ├── Real-time WebSocket Connections
+│   ├── Scout Agent Integration
+│   └── AI Processing Engine
+│
+
+└── Scout Agent (Autonomous AI)
+    ├── Price Monitoring
+    ├── Opportunity Detection
+    └── Booking Protection (Sentinel)
+
+2.3 KEY FEATURES
+----------------
+✓ Golden Seed Discovery: AI finds 15%+ price drops
+✓ Zero platform fees TO the customer. Revenue from provider-side referrals.
+✓ Multi-Tenant System: 4-level hierarchical organization
+✓ Headless API: Institutional-grade B2B integrations
+✓ Sentinel Agent: 24/7 booking monitoring
+✓ Unified Audit Log: SOC 2 compliant action tracking
+✓ Subagency Suspension: Lock sub-node mutations for governance
+✓ White-Label Options: Custom emerald-accented branding
+✓ Profit Optimization: Automated margin detection
+✓ Provider Orchestration: Slot pack templates and regional routing
+
+
+================================================================================
+3. HOW THE SYSTEM WORKS
+================================================================================
+
+3.1 GOLDEN SEED DISCOVERY PROCESS
+----------------------------------
+
+STEP 1: Price Monitoring
+→ Scout Agent continuously monitors multiple travel providers
+→ Tracks prices for flights, hotels, packages across 1000+ routes
+→ Historical price data analysis (3-6 months)
+→ AI predicts optimal booking windows
+
+STEP 2: Opportunity Detection
+→ When price drops 15%+ below historical average
+→ AI calculates confidence score (0-100%)
+→ Validates deal authenticity
+→ Creates "Golden Seed" opportunity
+
+STEP 3: User Notification
+→ Matched users receive instant alerts (email, SMS, push)
+→ Personalized based on preferences (origins, destinations, dates)
+→ Time-limited offers (typically 24-48 hours)
+
+STEP 4: Booking Process
+→ User reviews opportunity in dashboard
+→ One-click booking or "Book Later" option
+→ Direct payment to provider (zero FunTravelo fees)
+→ Booking confirmation and tracking
+
+STEP 5: Sentinel Protection
+→ Continuous monitoring of booked trips
+→ Auto-rebooking if better price found
+→ Flight change/cancellation alerts
+→ Travel insurance options
+
+
+
+
+3.3 USER JOURNEY
+-----------------
+
+FOR ENTERPRISES:
+1. Sign up → Managed Enterprise tier.
+2. Provision subagencies and staff seats.
+3. Manage white-label branding, security, and subagency suspension.
+4. Scale according to marginal subagency tiers.
+
+FOR SOLO AGENCIES:
+1. Sign up → 14-day free trial starts immediately (no credit card required).
+2. Dashboard displays a live trial countdown banner throughout the trial period.
+3. Upgrade via /pricing at any time (monthly or yearly Stripe Checkout).
+4. Access booking portal and white-label tools upon subscription activation.
+5. Manage subscription (upgrade/cancel/update card) via Stripe Billing Portal.
+6. Use API for custom integrations with plan-tier rate limits.
+
+
+
+
+================================================================================
+4. CUSTOMER TYPES & CONNECTION METHODS
+================================================================================
+
+4.1 CUSTOMER HIERARCHY (4-LEVEL MODEL)
+--------------------------------------
+
+TIER 1: PLATFORM ADMIN (GLOBAL)
+├── Access: Platform Admin Dashboard & Unified Admin API
+├── Role: PLATFORM_ADMIN (Global super-user)
+└── Connection: /api/admin/* endpoints, Admin Web UI
+
+TIER 2: ENTERPRISE (NETWORK / PARENT)
+├── Structure: Parent enterprise account managing isolated Subagencies
+├── Features: Centralized subagency suspension and global governance
+├── Pricing: $1,500 base/month (billed annually or monthly) + usage
+└── Connection: Enterprise Dashboard, REST API
+
+TIER 3: AGENCY (SOLO) & SUBAGENCY (NETWORK CHILD)
+├── Structure: Single agency account (Solo) OR child node of an Enterprise (Subagency)
+├── Access: Agency Dashboard (Web), API Access
+└── Plans: Growth / Business
+
+TIER 4: AGENT / STAFF
+├── Structure: The end-user travel agent working within a Solo Agency or Subagency
+├── Access: Curates deals and manages bookings for their assigned agency node
+└── Features: Specific role-based restrictions inside the node (e.g., manager vs standard agent)
+
+
+4.2 CONNECTION METHODS
+-----------------------
+
+WEB APPLICATION (https://app.funtravelo.com)
+├── Technology: Next.js 15, React 19
+├── Authentication: Email/password + optional TOTP 2FA
+├── Features: Full dashboard access, real-time updates
+├── Performance: <2s page load, 99.9% uptime
+└── Security: HTTPS, CSP headers, rate limiting
+
+
+
+REST API (https://api.funtravelo.com)
+├── Authentication: API keys (OAuth 2.0 planned)
+├── Format: JSON
+├── Rate Limiting: Tier-based (Growth/Business vs Enterprise); see Section 6
+├── Documentation: OpenAPI/Swagger at /docs
+└── Endpoints:
+    • GET  /api/v1/agencies/{id}/golden-seeds  - List opportunities
+    • POST /api/v1/agencies/{id}/bookings     - Create booking
+    • GET  /api/v1/analytics/roi              - View statistics
+    • POST /api/v1/search                     - Headless search
+
+
+================================================================================
+5. DASHBOARDS & USER INTERFACES
+================================================================================
+
+5.1 CLIENT PORTAL (WHITE-LABEL) — Web Only
+------------------------------------------
+
+Purpose:
+A client-facing portal hosted on an agency’s custom domain, used by agencies
+to share selected Golden Seeds and manage client trip tracking in one place.
+Clients do not purchase platform plans directly; access is by agency invitation.
+
+ACCESS MODEL:
+• Invite-only (agency creates client access)
+• Agency-branded portal (logo/colors; domain on Business/Enterprise)
+• No public self-serve pricing or client billing inside the portal
+
+SECTIONS:
+1. Shared Golden Seeds
+   ├── Agency-curated opportunities (card layout)
+   ├── Filters (optional): destination, dates, budget range
+   ├── Save/bookmark opportunities
+   └── “Book” opens provider checkout (direct-to-provider payment)
+
+2. Trips & Confirmations
+   ├── Upcoming trips
+   ├── Past trips
+   ├── Booking details and confirmations
+   └── Sentinel status (if agency enables Sentinel per trip)
+
+3. Messages & Requests
+   ├── Client ↔ agency messaging
+   ├── Special requests (preferences, changes, assistance)
+   └── Service status updates (handled by agency staff)
+
+4. Traveler Profile (Client Data)
+   ├── Contact details (managed by agency)
+   ├── Preferences (origins, destinations, flexibility, budget)
+   └── Documents/notes (agency-defined fields)
+
+METRICS DISPLAYED (Client View):
+• Shared Golden Seeds available
+• Saved opportunities
+• Trips tracked
+• Sentinel protections (if enabled)
+
+AUDIT & OWNERSHIP:
+• Client data and activity are owned/managed under the agency account.
+• Portal activity is logged for compliance and support.
+
+
+5.2 AGENCY DASHBOARD (Agency Solo / Enterprise Subagency)
+-------------------------------------------------------
+
+A consolidated interface for travel agents and enterprise networks to curate deals, manage team 
+assignments, and monitor client bookings. Provides the central hub for the 3rd and 4th tenant levels.
+
+SECTIONS:
+1. Golden Seed Curation
+   ├── Global deals filtered for local client needs
+   └── Status tracking (Active/Expired)
+
+2. Subagency & Agent Management
+   ├── (Enterprise) Manage sub-units and branch locations
+   ├── Invite agents to localized sub-units
+   ├── Role assignment (Agent, Manager)
+   └── Staff activity monitoring
+
+3. Booking Operations
+   ├── Manual client creation and CRM
+   ├── Direct booking trigger via provider slots
+   └── Sentinel alert feed (rebooking events)
+
+4. Financial Ledger (Agency View)
+   ├── Wallet balances and transaction history
+   ├── Profit margin tracking (Agency-specific)
+   └── Subsidy usage monitoring
+
+5. Client Portal Sync
+   ├── Control which deals are shared with travelers
+   └── Monitor traveler interactions and feedback
+
+
+5.3 PLATFORM ADMIN DASHBOARD (Central Governance)
+-----------------------------------------------
+
+A specialized environment for global administrators to manage Boston ecosystems, infrastructure, compliance, and top-tier metrics.
+
+SECTIONS:
+1. System Health & Observability
+   ├── Real-time status (API, DB, Redis)
+   └── 5xx error spike detection and path analysis
+
+2. User & Tenant Traversal
+   ├── Global user management (status, roles)
+   └── Hierarchy control (Enterprise/Agency CRUD)
+
+3. API Key Management
+   ├── Global oversight of all tenant API keys
+   └── Key rotation and environment (Sandbox/Prod) control
+
+4. Financial Administration
+   ├── Centralized ledger for billing events
+   ├── Revenue settlement verification logic
+   └── Wallet and credit line adjustments (+ Audit)
+
+5. Security & Compliance
+   ├── SOC 2 Audit Log traversal with filters
+   └── Rate-limit performance and 429 monitoring
+
+6. Operational Oversight
+   ├── Global Golden Seed curation and approval
+   └── Sentinel event live feed across all tenants
+
+7. Provider Governance
+   ├── CRUD for Providers and Slot Packs
+   └── Circuit breaker status and routing health
+
+
+5.4 API DASHBOARD (API Clients)
+-------------------------------
+
+Purpose:
+A dedicated section for technical teams consuming the platform via REST API.
+Included within Agency/Enterprise dashboards, not a separate program.
+
+SECTIONS:
+1. API Keys & Authentication
+   ├── Generate/revoke keys
+   └── IP whitelisting
+
+2. Usage & Quotas
+   ├── Real-time call volume
+   ├── Rate limit status
+   └── Overage monitoring
+
+3. Webhooks
+   ├── Configure endpoints
+   └── View delivery logs
+
+4. Documentation & Sandbox
+   ├── Interactive API reference
+   └── Test requests
+
+
+
+
+================================================================================
+6. PRICING PLANS & ADD-ONS
+================================================================================
+
+All paid plans include Dashboard access + API access.
+Yearly Price = 10 x Monthly Price (2 months free).
+Growth & Business plans start with a 14-day FREE TRIAL (no credit card required).
+
+TRIAL FLOW:
+→ Sign up → Trial starts (trial_ends_at = now + 14 days).
+→ Dashboard shows countdown banner during trial period.
+→ On day 14: banner changes to expired state; upgrade required for full access.
+→ Upgrade at any time via Stripe Checkout (monthly or yearly).
+
+PLAN 1: GROWTH (Agency Solo)
+- Free Trial: 14 days (no credit card required)
+- Monthly: $69/month · Stripe Price ID: STRIPE_PRICE_GROWTH_MONTHLY
+- Yearly: $690/year • 2 months free · Stripe Price ID: STRIPE_PRICE_GROWTH_YEARLY
+- Scope: Agency Dashboard, basic branding, standard reports, email support.
+- API Access: 3,000 calls/month included.
+- Overage: $0.01 per call.
+- Rate Limit: 100 requests/minute.
+
+PLAN 2: BUSINESS (Agency Solo)
+- Free Trial: 14 days (no credit card required)
+- Monthly: $144/month · Stripe Price ID: STRIPE_PRICE_BUSINESS_MONTHLY
+- Yearly: $1,440/year • 2 months free · Stripe Price ID: STRIPE_PRICE_BUSINESS_YEARLY
+- Scope: Full white-label, 1 custom domain, advanced analytics, priority support.
+- API Access: 8,000 calls/month included.
+- Overage: $0.008 per call.
+- Rate Limit: 500 requests/minute.
+
+PLAN 3: ENTERPRISE (Network)
+- No self-serve trial; contact sales.
+- Monthly: $750/month
+- Yearly: $7,500/year • 2 months free
+- Scope: Enterprise parent + sub-agencies, multiple custom domains, dedicated account manager, SLA 99.99%, advanced security.
+- API Access: 40,000 calls/month (pooled across sub-agencies).
+- Overage: $0.008 per call.
+- Rate Limit: 1,000 requests/minute.
+
+6.1 OPTIONAL ADD-ONS (Available for Growth/Business)
+----------------------------------------------------
+Add-ons can be selected during Stripe Checkout or managed via the Billing Portal. 
+(Note: Conflicting add-ons or bundled features are handled dynamically in the UI).
+
+ADD-ON 1: AI SUITE BUNDLE
+- Monthly: $29/month
+- Yearly: $290/year (2 months free margin)
+- Features: Advanced AI features for itinerary generation, automated email drafting, and deeper predictive analytics.
+- Target: Available to Growth & Business plans (Enterprise includes these features by default).
+
+
+
+
+================================================================================
+7. PAYMENT METHODS
+================================================================================
+
+7.1 ACCEPTED PAYMENT METHODS
+-----------------------------
+
+FOR SUBSCRIPTIONS (Platform Access):
+
+CREDIT/DEBIT CARDS (via Stripe)
+├── Visa
+├── Mastercard
+├── American Express
+├── Discover
+└── Processing: Instant, recurring billing
+
+DIGITAL WALLETS
+├── Apple Pay
+├── Google Pay
+├── PayPal
+└── Processing: Instant
+
+BANK TRANSFERS (for Enterprise plans)
+├── ACH (US)
+├── SEPA (Europe)
+├── Wire Transfer (International)
+└── Processing: 2-5 business days
+
+CRYPTOCURRENCY (Enterprise only)
+├── USDC/USDT
+└── Processing: Network-dependent
+
+
+
+
+
+7.2 PAYMENT PROCESSING
+-----------------------
+
+BILLING TARGETS:
+→ ONLY Agencies (Solo) and Enterprises are billed directly.
+→ Subagencies and Agents are managed under the enterprise account.
+
+SUBSCRIPTION PAYMENTS (Platform Access):
+→ Powered by: Stripe
+→ Frequency: Monthly or Annual (toggle available on pricing page)
+→ Auto-renewal: Yes (with 7-day advance notice)
+→ Invoicing: Automatic email receipts via Stripe
+
+STRIPE CHECKOUT FLOW (Growth & Business):
+1. User selects plan + interval on /pricing.
+2. Frontend calls POST /api/v1/billing/checkout-session (authenticated).
+3. Backend creates a Stripe Checkout Session with subscription mode + 14-day trial.
+4. User is redirected to hosted Stripe Checkout page (no card stored before trial).
+5. On completion, Stripe fires checkout.session.completed webhook.
+6. Backend links stripe_customer_id to Agency and sets subscription_status = trialing.
+7. User lands on /billing/return with success message, then redirected to dashboard.
+
+STRIPE BILLING PORTAL:
+→ Endpoint: POST /api/v1/billing/portal-session (authenticated)
+→ Allows: plan upgrade/downgrade, cancel subscription, update payment method.
+→ Stripe manages all PCI-sensitive operations.
+
+STRIPE WEBHOOK EVENTS HANDLED:
+├── checkout.session.completed     → Link stripe_customer_id to Agency
+├── customer.subscription.created  → Set subscription_status, current_period_end
+├── customer.subscription.updated  → Update subscription_status, plan, period_end
+├── customer.subscription.deleted  → Set subscription_status = canceled
+├── invoice.payment_succeeded      → Confirm active subscription
+└── invoice.payment_failed         → Flag past_due, trigger upgrade prompt
+
+WEBHOOK SECURITY:
+→ Endpoint: POST /api/v1/webhooks/stripe
+→ Stripe-Signature header verified against STRIPE_WEBHOOK_SECRET
+→ Events rejected if signature mismatch (HTTP 400)
+
+API USAGE BILLING (Overage):
+→ Meter: API calls counted monthly per paying account
+→ Billing: Overage charges added to the subscription invoice
+→ Visibility: API usage and estimated overage shown in dashboard
+
+TRAVEL BOOKING PAYMENTS:
+→ Paid directly to travel providers.
+→ FunTravelo is not the merchant-of-record for travel bookings.
+(Notice: Zero platform fees TO the customer. Revenue from provider-side referrals and SaaS/API billing.)
+
+
+7.3 REFUND POLICY
+------------------
+
+SUBSCRIPTION REFUNDS:
+├── 14-day free trial (no payment collected during trial period)
+├── 7-day money-back guarantee after first charge (new users)
+├── Pro-rated refunds for annual plans (within 30 days of charge)
+├── No refunds for monthly plans (can cancel anytime)
+└── Processing time: 5-10 business days
+
+
+
+
+7.4 PAYMENT SECURITY
+---------------------
+
+COMPLIANCE:
+✓ PCI DSS Level 1 Certified (via Stripe)
+✓ SOC 2 Type II Compliant
+✓ GDPR Compliant
+✓ 3D Secure 2.0 Enabled
+
+SECURITY MEASURES:
+✓ Tokenization (no card data stored)
+✓ End-to-end encryption
+✓ Fraud detection (Stripe Radar)
+✓ Two-factor authentication
+✓ Regular security audits
+
+
+================================================================================
+8. TECHNICAL ARCHITECTURE
+================================================================================
+
+8.1 SYSTEM COMPONENTS
+----------------------
+
+FRONTEND LAYER:
+├── Web Application
+│   ├── Framework: Next.js 15 (React 19)
+│   ├── Hosting: Vercel Edge Network
+│   ├── CDN: Cloudflare
+│   └── Performance: <2s load time, 95+ Lighthouse score
+│
+
+└── Dashboards
+    ├── Institutional Role-Based UIs (Platform Admin/Enterprise/Subagency)
+    └── Multi-Tenant Data Isolation (RLS enforced)
+
+BACKEND LAYER:
+├── API Server
+│   ├── Framework: FastAPI (Python 3.10+)
+│   ├── Hosting: Fly.io (multi-region)
+│   ├── Performance: <100ms average response time
+│   ├── Unified Admin API: /api/admin/* (RBAC enforced)
+│   └── Endpoints: 35+ REST APIs
+│
+├── Database
+│   ├── Primary: PostgreSQL 14
+│   ├── ORM: SQLAlchemy (Runtime), Prisma (Migrations)
+│   ├── ID Strategy: UUID (Global)
+│   └── Backups: Daily automated
+│   └── Size: Scalable to petabytes
+│
+├── Cache Layer
+│   ├── Technology: Redis 6+
+│   ├── Use: Session storage, rate limiting, caching
+│   └── Performance: <10ms average latency
+│
+└── File Storage
+    ├── Provider: Cloudflare R2
+    ├── Use: User uploads, assets
+    └── CDN integrated
+
+AI/ML LAYER:
+├── Scout Agent
+│   ├── Technology: Python + TensorFlow
+│   ├── Function: Price monitoring, prediction
+│   ├── Data Sources: 50+ travel providers
+│   └── Frequency: Real-time via APIs
+│
+
+└── Sentinel Agent
+    ├── Technology: Event-driven architecture
+    ├── Function: Booking monitoring, alerts
+    └── Frequency: Continuous (every 15 minutes)
+
+INTEGRATION LAYER:
+├── Payment Gateway: Stripe (Checkout, Billing Portal, Webhooks)
+├── Email Service: Resend
+├── SMS Service: Twilio
+└── Analytics: Custom + Google Analytics
+
+BILLING & SUBSCRIPTION LAYER:
+├── Stripe Checkout Sessions  → POST /api/v1/billing/checkout-session
+├── Stripe Billing Portal     → POST /api/v1/billing/portal-session
+├── Stripe Webhook Handler    → POST /api/v1/webhooks/stripe
+│   ├── Signature verification via stripe-signature header
+│   └── Events: checkout.*, customer.subscription.*, invoice.*
+├── Agency Model Fields:
+│   ├── stripe_customer_id       (linked on first checkout)
+│   ├── stripe_subscription_id   (set on subscription activation)
+│   ├── subscription_status      (trialing / active / past_due / canceled)
+│   ├── trial_ends_at            (set at signup, +14 days)
+│   └── current_period_end       (updated by subscription webhooks)
+└── Frontend:
+    ├── /pricing          — Monthly/Yearly toggle + Stripe Checkout initiation
+    ├── /billing/return   — Post-checkout success/cancel landing page
+    └── Dashboard Banner  — Trial countdown + expiration CTA (DashboardShell)
+
+
+8.2 SECURITY FEATURES
+----------------------
+
+✓ Rate Limiting (100/500/1,000 RPM per plan; 5/10/100 for core endpoints)
+✓ Account Lockout (5 failed attempts = 15min lock)
+✓ Security Headers (CSP, HSTS, XSS protection)
+✓ Environment Validation (Pydantic)
+✓ Audit Logging: Unified AuditLog table (Actor/Action/Resource metadata)
+✓ Subagency Suspension Enforcement (locking child resources)
+✓ HTTPS Everywhere (forced SSL/TLS)
+✓ Data Encryption (at rest and in transit)
+✓ GDPR Compliance (data export, right to be forgotten)
+✓ SOC 2 Type II Compliant
+✓ Regular Security Audits
+
+
+8.3 MONITORING & RELIABILITY
+------------------------------
+
+ERROR MONITORING:
+├── Tool: Sentry
+├── Coverage: Frontend + Backend
+├── Alerts: Real-time to dev team
+└── Target: <0.1% error rate
+
+UPTIME MONITORING:
+├── Tool: Custom health checks + UptimeRobot
+├── Frequency: Every 1 minute
+├── Targets:
+│   ├── API: 99.9% uptime
+│   ├── Web App: 99.95% uptime
+│   └── Database: 99.99% uptime
+└── Incident Response: <15 minute response time
+
+PERFORMANCE MONITORING:
+├── Metrics: Response time, throughput, error rate
+├── Dashboards: Real-time admin dashboard
+└── Alerting: Automatic for anomalies
+
+LOGGING:
+├── Structured JSON logs
+├── Centralized log aggregation
+├── Retention: 90 days
+└── Log levels: DEBUG, INFO, WARN, ERROR
+
+
+================================================================================
+9. BUSINESS MODEL
+================================================================================
+
+9.1 VALUE PROPOSITION
+-----------------------
+
+FOR ENTERPRISES:
+✓ Complete multi-tenant travel OS
+✓ Global price discovery across all sub-agencies
+✓ Centralized revenue and usage control
+✓ Subagency suspension and cluster governance
+✓ institutional-grade security and isolation
+✓ Scalable high-volume API access
+
+FOR SUBAGENCIES (Under an Enterprise):
+✓ Professional manual booking portal
+✓ Access to Enterprise-scale travel deals
+✓ Subagency and agent seat management
+✓ Automated Sentinel re-booking
+✓ Zero technical overhead for deal sourcing
+
+
+
+
+9.2 COMPETITIVE ADVANTAGES
+---------------------------
+
+1. ZERO-REVENUE-LOSS MODEL
+   Unlike traditional OTAs (10-20% markup), FunTravelo focuses on
+   capturing provider incentives directly. Revenue from referrals and SaaS only.
+
+2. AI-POWERED DISCOVERY
+   Proprietary Scout Agent technology finds deals competitors miss.
+   15%+ savings threshold ensures quality.
+
+3. MULTI-TIER REVENUE STRUCTURE
+   All stakeholders benefit from captured deltas.
+   Alignment of interests = better service.
+
+4. HEADLESS API
+   Enables B2B enterprises to integrate without building sourcing tech.
+   First-mover advantage in headless travel.
+
+5. SENTINEL PROTECTION
+   Unique post-booking monitoring and auto-rebooking feature.
+   Reduces customer churn and builds loyalty.
+
+
+9.3 TARGET MARKETS
+-------------------
+
+PRIMARY MARKET: Large Travel Organizations
+├── Regional Travel Groups
+├── Corporate Travel Desks
+└── Multi-location subagency networks
+
+SECONDARY MARKET: Platform Integrators
+├── Enterprise travel SaaS platforms
+├── FinTech travel integrations
+└── Wholesale travel distributors
+
+
+
+
+================================================================================
+10. REVENUE STREAMS
+================================================================================
+
+10.1 REVENUE BREAKDOWN
+-----------------------
+
+1) SaaS SUBSCRIPTIONS (Base)
+   ├── Growth: $69/mo
+   ├── Business: $149/mo
+   ├── Enterprise: $1,500/mo
+
+2) API OVERAGE FEES
+   ├── Growth: $0.01/call
+   ├── Business/Enterprise: $0.008/call
+
+3) OPTIONAL ADD-ONS
+   ├── AI Suite Bundle: $29/mo (Targeting Growth/Business users)
+
+
+10.2 REVENUE PROJECTIONS (Year 1)
+-----------------------------------
+
+ASSUMPTIONS:
+• 50 Enterprise Accounts (Networks)
+• 250 Solo Agencies (Growth/Business mix)
+
+REVENUE ASSUMPTIONS:
+• Avg. Enterprise MRR: $4,500 (assumption)
+  - $1,500 base subscription (Enterprise)
+  - +$3,000 average overage + sub-agency / add-on revenue
+• Avg. Solo Agency MRR: $155 (assumption)
+  - Blend of $69 (Growth) / $149 (Business)
+  - +average overage and Add-on attachment (e.g., AI Suite Bundle)
+
+MONTHLY RECURRING REVENUE (MRR):
+• Enterprise: 50 × $4,500 = $225,000
+• Solo Agencies: 250 × $155 = $38,750
+• Total MRR: $263,750
+
+ANNUAL RECURRING REVENUE (ARR):
+• $263,750 × 12 = $3,165,000
+
+TOTAL YEAR 1 PROJECTED REVENUE:
+• $3.17M (subscription + usage)
+
+
+10.3 UNIT ECONOMICS
+--------------------
+
+CUSTOMER ACQUISITION COST (CAC):
+├── Enterprise: $2,500 (Direct sales, institutional networking)
+├── Agency: $400 (Digital growth)
+
+LIFETIME VALUE (LTV):
+├── Enterprise: $84,000 (avg 24 months @ $3,500/mo)
+├── Agency: $3,600 (avg 24 months @ $150/mo)
+
+LTV:CAC RATIOS:
+├── Enterprise: 33:1 ✓ Exceptional
+├── Agency: 9:1 ✓ Healthy
+
+
+10.4 PRICING STRATEGY
+----------------------
+
+UNIFIED GROWTH MODEL:
+→ Low friction entry for independent agents (Growth Plan)
+→ Value-based upselling (Business/Enterprise)
+→ Usage-based potential (API Overage)
+
+ENTERPRISE INSTITUTIONAL MODEL:
+→ High-touch enterprise relationship model
+→ Pooled API usage incentivizes network scale
+→ Centralized governance and suspension for sub-agency networks
+
+SIMPLIFIED ACCESS:
+→ Single unified plan family for Dashboard + API
+→ Predictable base fees for infrastructure stability
+
+
+================================================================================
+APPENDIX: KEY METRICS & BENCHMARKS
+================================================================================
+
+PERFORMANCE BENCHMARKS:
+• API Response Time: <100ms (p95)
+• Frontend Load Time: <2 seconds
+• Scout Agent Latency: <5 minutes (opportunity detection)
+• Database Query Time: <50ms (p95)
+• Uptime: 99.9% (API), 99.95% (Web)
+
+USER METRICS (Targets):
+• Growth-to-Business Upgrade Rate: 20%
+• Monthly Active Users: 70%
+• Churn Rate: <5% monthly
+• Net Promoter Score (NPS): >50
+• Customer Satisfaction: >4.5/5
+
+BUSINESS METRICS:
+• Gross Margin: 75%
+• Customer Acquisition Payback: <6 months
+• Annual Revenue Growth: 100% YoY (Year 1-3)
+• MRR Growth Rate: 10% monthly
+
+OPERATIONAL METRICS:
+• Scout Agent Accuracy: >90%
+• Golden Seed Conversion Rate: 15%
+• Average Savings per Booking: 18%
+• Sentinel Protection Activations: 5% of bookings
+
+
+================================================================================
+11. GOLDEN SEED DATA SYSTEM
+================================================================================
+
+11.1 OVERVIEW
+--------------
+
+The Golden Seed Data System is a standardized, CI/CD-safe database seeding
+framework that ensures the destinations dataset is reproducible, validated,
+and compatible with the PostgreSQL production database.
+
+All seed SQL files conform to the Golden Seed conventions and are generated
+via an AI-assisted pipeline that enforces schema correctness, data quality
+rules, and safe re-run behavior.
+
+11.2 SEED FILES
+----------------
+
+├── golden_seed_destinations.sql        (347 rows — curated premium destinations)
+├── golden_seed_destinations_10000.sql   (10,000 rows — extended global dataset)
+└── golden_seed_report.md               (companion report with changelog/warnings)
+
+NOTE: These two SQL files are ALTERNATIVE seeds (not additive). Each uses
+DROP TABLE IF EXISTS ... CASCADE and rebuilds the destinations table from
+scratch. Choose one based on your deployment needs:
+
+  • 347-row file: Hand-curated premium/free destinations for demo/staging
+  • 10,000-row file: Machine-generated global coverage for production/load testing
+
+11.3 GOLDEN SEED CONVENTIONS APPLIED
+--------------------------------------
+
+Target Database:         PostgreSQL (confirmed from Prisma schema)
+Identifier Style:        snake_case, no quoting (bare identifiers)
+String Escaping:         Standard SQL (doubled apostrophes '')
+Boolean Style:           Native PostgreSQL (true/false)
+Primary Key Strategy:    UUID (Global)
+Timestamps:              created_at, updated_at (TIMESTAMPTZ DEFAULT NOW())
+Run Mode:                drop_recreate
+Transaction Wrapping:    BEGIN; ... COMMIT;
+FK Disable During Load:  SET session_replication_role = 'replica'/'origin'
+Index Deferral:          Indexes created AFTER bulk INSERT
+Batch Size:              1,000 rows per INSERT statement
+Slug Constraint:         VARCHAR(190), UNIQUE
+FK Validation:           warn_only (countries table presence unknown)
+
+11.4 SCHEMA: Destination TABLE
+-----------------------------
+
+model Destination (Prisma)
+{
+  id           String       @id @default(uuid())
+  country_id   Int
+  name         String
+  slug         String       @unique @db.VarChar(190)
+  airport_name String?
+  airport_code String?      @db.VarChar(3)
+  timezone     String?
+  popularity   Int?
+  budget_range Json?        // { "low": 100, "high": 500 }
+}
+
+Notes:
+- Foreign Key: country_id references Country(id)
+- Slug enforced at 190 chars for index safety
+- Country identified by ISO-alpha2 code for stable seeding
+
+FOREIGN KEY: country_id → countries(id) ON DELETE CASCADE ON UPDATE CASCADE
+INDEXES:     country_id
